@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Service struct {
@@ -160,6 +161,7 @@ func (s *Service) doRequest(method, urlStr string, body io.Reader) ([]byte, erro
 	if s.switchUser != "" {
 		req.Header.Set("X-Redmine-Switch-User", s.switchUser)
 	}
+	s.client.Timeout = time.Duration(30 * time.Second)
 	res, err := s.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -295,6 +297,7 @@ type Issue struct {
 	Priority       *Name             `json:"priority"`
 	Status         *Name             `json:"status"`
 	Subject        string            `json:"subject"`
+	Notes          string            `json:"notes"`
 	FixedVersion   *Name             `json:"fixed_version"`
 	UpdatedOn      string            `json:"updated_on"`
 	Project        *Name             `json:"project"`
@@ -363,6 +366,7 @@ func (n *Nint) UnmarshalJSON(b []byte) (err error) {
 }
 
 type issue struct {
+	Notes          string         `json:"notes,omitempty"`
 	Subject        string         `json:"subject,omitempty"`
 	ParentIssueId  int            `json:"parent_issue_id,omitempty"`
 	EstimatedHours float64        `json:"estimated_hours,omitempty"`
@@ -385,6 +389,7 @@ type issue struct {
 
 func (r *Issue) toSend(uploads []*Upload) *issue {
 	newIssue := new(issue)
+	newIssue.Notes = r.Notes
 	newIssue.Subject = r.Subject
 	if r.Parent != nil {
 		newIssue.ParentIssueId = r.Parent.Id
